@@ -25,8 +25,17 @@ import { jsonResult, readNumberParam, readStringParam } from "./common.js";
 const AllMessageActions = CHANNEL_MESSAGE_ACTION_NAMES;
 function buildRoutingSchema() {
   return {
-    channel: Type.Optional(Type.String()),
-    target: Type.Optional(channelTargetSchema({ description: "Target channel/user id or name." })),
+    channel: Type.Optional(
+      Type.String({
+        description: "The messaging platform to use (e.g., 'telegram', 'discord', 'slack').",
+      }),
+    ),
+    target: Type.Optional(
+      channelTargetSchema({
+        description:
+          "REQUIRED for sending: The recipient user ID or username (e.g., '6350755281' or '@username'). This is where the message will be sent.",
+      }),
+    ),
     targets: Type.Optional(channelTargetsSchema()),
     accountId: Type.Optional(Type.String()),
     dryRun: Type.Optional(Type.Boolean()),
@@ -35,7 +44,12 @@ function buildRoutingSchema() {
 
 function buildSendSchema(options: { includeButtons: boolean; includeCards: boolean }) {
   const props: Record<string, unknown> = {
-    message: Type.Optional(Type.String()),
+    message: Type.Optional(
+      Type.String({
+        description:
+          "REQUIRED for send action: The text content of the message to send. Example: 'Hello!' or 'Good night!'",
+      }),
+    ),
     effectId: Type.Optional(
       Type.String({
         description: "Message effect name/id for sendWithEffect (e.g., invisible ink).",
@@ -304,7 +318,8 @@ function buildMessageToolDescription(options?: {
   currentChannel?: string;
   currentChannelId?: string;
 }): string {
-  const baseDescription = "Send, delete, and manage messages via channel plugins.";
+  const baseDescription =
+    "Send, delete, and manage messages via channel plugins. For action='send': MUST include 'message' (the text to send) and 'target' (recipient user ID or @username).";
 
   // If we have a current channel, show only its supported actions
   if (options?.currentChannel) {
